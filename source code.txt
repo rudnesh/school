@@ -1,0 +1,140 @@
+from fileinput import filename
+import pickle
+from ttk import *
+from ttkthemes import ThemedStyle
+from tkinter import colorchooser as color
+from tkinter import filedialog as fd
+from tkinter import ttk
+from tkinter.filedialog import asksaveasfile
+p = ttk()
+p.title("Media notes")
+p.geometry("100x500")
+def choose_color():
+    # variable to store hexadecimal code of color
+    color_code = color.askcolor(title ="Choose color")
+    main_frame["background"]=list(color_code[1:2])
+    sec["background"]=list(color_code[1:2])
+    my_canvas["background"]=list(color_code[1:2])
+    second_frame["background"]=list(color_code[1:2])
+    y_scrollbar["background"]=list(color_code[1:2])
+main_frame = Frame(p)
+style = ThemedStyle() 
+style.theme_use('adapta')
+style.configure("Vertical.TScrollbar", background="green", bordercolor="red", arrowcolor="red")
+main_frame.pack(fill=BOTH,expand=2)
+
+sec = Frame(main_frame)
+# Create A Canvas
+my_canvas = Canvas(main_frame)
+my_canvas.pack(side=LEFT,fill=BOTH,expand=1 )
+# Add A Scrollbars to Canvas
+y_scrollbar = ttk.Scrollbar(main_frame,orient=VERTICAL,command=my_canvas.yview)
+y_scrollbar.pack(side=RIGHT,fill=Y)
+#Configure the canvas
+my_canvas.configure(yscrollcommand=y_scrollbar.set)
+my_canvas.bind("<Configure>",lambda e: my_canvas.config(scrollregion= my_canvas.bbox(ALL))) 
+# Create Another Frame INSIDE the Canvas
+second_frame = Frame(my_canvas,borderwidth=10)
+# Add that New Frame a Window In The Canvas
+my_canvas.create_window((0,0),window= second_frame)
+clicks = 0
+a=[]
+tex=[]
+copydata=[]
+oldtex=[]
+s=[]
+try:
+    with open(r'C:/Users/tmoha/Desktop/school/len.txt','rb') as file_handle:
+         retrieved_data = pickle.load(file_handle)
+    
+    if len(tex)>=0:
+            for k in range(len(retrieved_data)):
+                tex.append(retrieved_data[k])
+            for i in range(len(tex)):
+                box=Text(second_frame,height=100,width=100)
+                s.append(box)
+                s[i].insert(1.0,tex[i])
+                s[i].pack(padx=10,pady=20)
+except EOFError :
+    pass
+class textbox:
+    def area():     
+        global p ,a,y,box,tex,fname,retrieved_data
+        global clicks #this will use the variable to count
+        clicks =+ 1
+        n=[]
+        a.append(n)
+        y=len(a)
+        for x in range(clicks):
+            box=Text(second_frame,height=100,width=100)
+            n.append(box)
+            n[x].pack(padx=10,pady=20)           
+    def newfile():
+        global fname,retrieved_data
+        filetypes = (
+        ('text files', '*.rtf'),
+        ('All files', '*.*'))
+        fname = fd.askopenfilename(
+            title='Open a file',
+            initialdir='/',
+            filetypes=filetypes)
+        print(filename)
+        with open(fname,"rb") as file_handle:
+         retrieved_data = pickle.load(file_handle)
+        
+    def save():
+        global s
+        tex.clear()
+        for e in range(len(s)):
+            old_data=s[e].get(1.0,END)
+            tex.append(old_data)
+        for row in range(len(a)):
+            for col in range(clicks):
+                r=a[row][col].get(1.0,END)
+                tex.append(r) 
+    def do_popup(event):
+        try:
+            m.tk_popup(event.x_root, event.y_root)
+        finally:
+            m.grab_release()
+    def delete():
+        tex.pop()
+        for gh in range(len(tex)):
+            gh[i].pack_forget()
+        p.mainloop()
+    def copy_select(): # copy selected text to clipboard
+        global tex,copydata
+        if tex[i].selection_get():
+            copydata=tex[i].selection_get
+            print(copydata)
+    def save_file():
+        f = asksaveasfile(initialfile = 'Untitled.txt',
+            defaultextension=".txt",filetypes=[("All Files","*.*"),("Text Documents","*.txt")])
+menubar = Menu(p,background="#050509")
+filemenu = Menu(menubar, tearoff=0,activeforeground="#837f7f",fg="white",background= "#050509")
+filemenu.add_command(label="New file",activebackground="#050509",activeforeground="white",command=textbox.newfile)
+filemenu.add_command(label="Open", command=None)
+filemenu.add_command(label="Save", command=lambda: textbox.save())
+Button(p, text='newbox',background="#050509",foreground="white", command= textbox.area).place(x=1200)
+filemenu.add_command(label="Save as...", command=textbox.save_file)
+filemenu.add_command(label="Close", command= lambda: p.quit())
+filemenu.add_separator()
+menubar.add_cascade(label="File",foreground = 'white' , menu=filemenu)
+editmenu = Menu(menubar, tearoff=0,activeforeground="#837f7f",fg="white",background= "#050509")
+editmenu.add_command(label="bgcolour",activebackground="#050509",activeforeground="white",command=choose_color)
+editmenu.add_command(label="remove", command=None)
+editmenu.add_command(label="size", command=None)
+menubar.add_cascade(label="Edit",foreground = 'white' , menu=editmenu)
+m = Menu(p, tearoff = 0)
+m.add_command(label ="Cut",background="#050509",foreground="white")
+m.add_command(label ="Copy",background="#050509",foreground="white")
+m.add_command(label ="Paste",background="#050509",foreground="white")
+m.add_command(label ="move",background="#050509",foreground="white")
+m.add_command(label ="delete",background="#050509",foreground="white",command=textbox.delete)
+p.bind("<Button-3>", textbox.do_popup)
+#https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/menu-coptions.html
+p.config(menu=menubar)
+p.pack_slaves()
+p.mainloop()
+with open("len","wb") as file_handle:
+    pickle.dump(tex, file_handle )
